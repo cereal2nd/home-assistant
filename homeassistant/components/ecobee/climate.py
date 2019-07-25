@@ -67,16 +67,6 @@ PRESET_TO_ECOBEE_HOLD = {
     PRESET_HOLD_INDEFINITE: 'indefinite',
 }
 
-PRESET_MODES = [
-    PRESET_NONE,
-    PRESET_AWAY,
-    PRESET_TEMPERATURE,
-    PRESET_HOME,
-    PRESET_SLEEP,
-    PRESET_HOLD_NEXT_TRANSITION,
-    PRESET_HOLD_INDEFINITE
-]
-
 SERVICE_SET_FAN_MIN_ON_TIME = 'ecobee_set_fan_min_on_time'
 SERVICE_RESUME_PROGRAM = 'ecobee_resume_program'
 
@@ -171,6 +161,12 @@ class Thermostat(ClimateDevice):
         if len(self._operation_list) == 2:
             self._operation_list.insert(0, HVAC_MODE_AUTO)
         self._operation_list.append(HVAC_MODE_OFF)
+
+        self._preset_modes = [PRESET_NONE]
+        self._preset_modes.extend([
+            comfort['name'] for comfort in
+            self.thermostat['program']['climates']
+        ])
 
         self._fan_modes = [FAN_AUTO, FAN_ON]
         self.update_without_throttle = False
@@ -372,6 +368,20 @@ class Thermostat(ClimateDevice):
         elif preset_mode == PRESET_NONE:
             self.data.ecobee.resume_program(self.thermostat_index)
 
+        elif preset_mode in self.preset_modes:
+            climate_ref = None
+
+            for comfort in self.thermostat['program']['climates']:
+                if comfort['name'] == preset_mode:
+                    climate_ref = comfort['climateRef']
+                    break
+
+            if climate_ref is None:
+                self.data.ecobee.set_climate_hold(
+                    self.thermostat_index, climate_ref, self.hold_preference())
+            else:
+                _LOGGER.warning("Received unknown preset mode: %s", preset_mode)
+
         else:
             self.data.ecobee.set_climate_hold(
                 self.thermostat_index, preset_mode, self.hold_preference())
@@ -379,7 +389,7 @@ class Thermostat(ClimateDevice):
     @property
     def preset_modes(self):
         """Return available preset modes."""
-        return PRESET_MODES
+        return self._preset_modes
 
     def set_auto_temp_hold(self, heat_temp, cool_temp):
         """Set temperature hold in auto mode."""
