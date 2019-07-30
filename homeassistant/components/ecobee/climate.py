@@ -151,7 +151,6 @@ class Thermostat(ClimateDevice):
         self._name = self.thermostat['name']
         self.hold_temp = hold_temp
         self.vacation = None
-        self._climate_list = self.climate_list
 
         self._operation_list = []
         if self.thermostat['settings']['heatStages']:
@@ -285,14 +284,6 @@ class Thermostat(ClimateDevice):
         return self._operation_list
 
     @property
-    def climate_mode(self):
-        """Return current mode, as the user-visible name."""
-        cur = self.thermostat['program']['currentClimateRef']
-        climates = self.thermostat['program']['climates']
-        current = list(filter(lambda x: x['climateRef'] == cur, climates))
-        return current[0]['name']
-
-    @property
     def current_humidity(self) -> Optional[int]:
         """Return the current humidity."""
         return self.thermostat['runtime']['actualHumidity']
@@ -329,9 +320,7 @@ class Thermostat(ClimateDevice):
         status = self.thermostat['equipmentStatus']
         return {
             "fan": self.fan,
-            "climate_mode": self.climate_mode,
             "equipment_running": status,
-            "climate_list": self.climate_list,
             "fan_min_on_time": self.thermostat['settings']['fanMinOnTime']
         }
 
@@ -380,7 +369,8 @@ class Thermostat(ClimateDevice):
                 self.data.ecobee.set_climate_hold(
                     self.thermostat_index, climate_ref, self.hold_preference())
             else:
-                _LOGGER.warning("Received unknown preset mode: %s", preset_mode)
+                _LOGGER.warning("Received unknown preset mode: %s",
+                                preset_mode)
 
         else:
             self.data.ecobee.set_climate_hold(
@@ -504,9 +494,3 @@ class Thermostat(ClimateDevice):
         # supported; note that this should not include 'indefinite'
         # as an indefinite away hold is interpreted as away_mode
         return 'nextTransition'
-
-    @property
-    def climate_list(self):
-        """Return the list of climates currently available."""
-        climates = self.thermostat['program']['climates']
-        return list(map((lambda x: x['name']), climates))
