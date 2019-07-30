@@ -17,6 +17,7 @@
 		"python.pythonPath": "/usr/local/bin/python",
 		"python.linting.pylintEnabled": true,
 		"python.linting.enabled": true,
+		"editor.formatOnSave": true,
 		"files.trimTrailingWhitespace": true,
 		"editor.rulers": [80],
 		"terminal.integrated.shell.linux": "/bin/bash",
