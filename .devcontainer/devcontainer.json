@@ -20,7 +20,7 @@
 		"python.formatting.provider": "black",
 		"python.formatting.blackArgs": [
 			"--target--version",
-			"py37"
+			"py36"
 		],
 		"editor.formatOnPaste": false,
 		"editor.formatOnSave": true,
